@@ -17,6 +17,14 @@ function createDeferredCallback() {
 	};
 }
 
+function toAsyncIterable(iterator) {
+	return {
+		[Symbol.asyncIterator]() {
+			return iterator;
+		},
+	};
+}
+
 test('main', async t => {
 	const {nextValue, onValue} = createDeferredCallback();
 
@@ -39,10 +47,61 @@ test('main', async t => {
 	const {promise: cleanupPromise, resolve} = pDefer();
 
 	onCleanup(resolve);
-	complete();
+
+	setImmediate(() => {
+		complete();
+	});
 
 	t.deepEqual(await iterator.next(), {
 		done: true,
 	});
+
 	await cleanupPromise;
+});
+
+test('for await...of syntax with .complete()', async t => {
+	const {nextValue, onValue} = createDeferredCallback();
+
+	const {next, complete, iterator} = createDeferredAsyncIterator();
+
+	onValue(next);
+
+	setImmediate(() => {
+		nextValue(1);
+		nextValue(2);
+		complete();
+	});
+
+	const values = [];
+
+	for await (const value of toAsyncIterable(iterator)) {
+		values.push(value);
+	}
+
+	t.deepEqual(values, [1, 2]);
+});
+
+test('for await...of syntax with breaking', async t => {
+	const {nextValue, onValue} = createDeferredCallback();
+
+	const {next, iterator} = createDeferredAsyncIterator();
+
+	onValue(next);
+
+	setImmediate(() => {
+		nextValue(1);
+		nextValue(2);
+	});
+
+	const values = [];
+
+	for await (const value of toAsyncIterable(iterator)) {
+		values.push(value);
+
+		if (values.length === 2) {
+			break;
+		}
+	}
+
+	t.deepEqual(values, [1, 2]);
 });

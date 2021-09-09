@@ -32,13 +32,13 @@ for await (const value of iterator) {
 
 Type: `AsyncIterator`
 
-##### next()
+##### next(value)
 
 Provide the next value to the iterator.
 
 ##### complete()
 
-Stop any further iterations of the iterator. Any callback that was provided to `onCleanup` will be called.
+Provide a "done" value to the iterator which causes a [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) loop to exit after all previous values have been iterated over. Any callback that was provided to `onCleanup` will be called.
 
 ##### onCleanup(callback)
 

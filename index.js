@@ -14,23 +14,25 @@ export default function createDeferredAsyncIterator() {
 		}
 	});
 
+	function sendNextValue(value) {
+		if (onNextCallbacks.size > 0) {
+			onNextCallbacks.dequeue()(value);
+		} else {
+			values.enqueue(value);
+		}
+	}
+
 	return {
 		next(value) {
-			const result = {
+			sendNextValue({
 				done: false,
 				value,
-			};
-
-			if (onNextCallbacks.size > 0) {
-				onNextCallbacks.dequeue()(result);
-			} else {
-				values.enqueue(result);
-			}
+			});
 		},
 		complete() {
 			cleanup();
 
-			values.enqueue({
+			sendNextValue({
 				done: true,
 			});
 		},
@@ -54,7 +56,10 @@ export default function createDeferredAsyncIterator() {
 			return(value) {
 				cleanup();
 
-				return value;
+				return {
+					done: true,
+					value,
+				};
 			},
 			throw(error) {
 				if (!errorCallbacks.some(callback => callback(error) === false)) {

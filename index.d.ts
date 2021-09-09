@@ -23,7 +23,7 @@ export default function createDeferredAsyncIterator<NextValueType = unknown, Ret
 	next(value?: NextValueType): void;
 
 	/**
-	Stop any further iterations of the iterator. Any callback that was provided to `onCleanup` will be called.
+	Provide a "done" value to the iterator which causes a [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) loop to exit after all previous values have been iterated over. Any callback that was provided to `onCleanup` will be called.
 	*/
 	complete(): void;
 

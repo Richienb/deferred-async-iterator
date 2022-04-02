@@ -1,4 +1,5 @@
-import test from 'ava';
+import {test} from 'uvu';
+import {equal} from 'uvu/assert'; // eslint-disable-line node/file-extension-in-import
 import pDefer from 'p-defer';
 import createDeferredAsyncIterator from './index.js';
 
@@ -25,7 +26,7 @@ function toAsyncIterable(iterator) {
 	};
 }
 
-test('main', async t => {
+test('main', async () => {
 	const {nextValue, onValue} = createDeferredCallback();
 
 	const {next, complete, onCleanup, iterator} = createDeferredAsyncIterator();
@@ -35,11 +36,11 @@ test('main', async t => {
 	nextValue(1);
 	nextValue(2);
 
-	t.deepEqual(await iterator.next(), {
+	equal(await iterator.next(), {
 		done: false,
 		value: 1,
 	});
-	t.deepEqual(await iterator.next(), {
+	equal(await iterator.next(), {
 		done: false,
 		value: 2,
 	});
@@ -52,14 +53,14 @@ test('main', async t => {
 		complete();
 	});
 
-	t.deepEqual(await iterator.next(), {
+	equal(await iterator.next(), {
 		done: true,
 	});
 
 	await cleanupPromise;
 });
 
-test('for await...of syntax with .complete()', async t => {
+test('for await...of syntax with .complete()', async () => {
 	const {nextValue, onValue} = createDeferredCallback();
 
 	const {next, complete, iterator} = createDeferredAsyncIterator();
@@ -78,10 +79,10 @@ test('for await...of syntax with .complete()', async t => {
 		values.push(value);
 	}
 
-	t.deepEqual(values, [1, 2]);
+	equal(values, [1, 2]);
 });
 
-test('for await...of syntax with breaking', async t => {
+test('for await...of syntax with breaking', async () => {
 	const {nextValue, onValue} = createDeferredCallback();
 
 	const {next, iterator} = createDeferredAsyncIterator();
@@ -103,5 +104,7 @@ test('for await...of syntax with breaking', async t => {
 		}
 	}
 
-	t.deepEqual(values, [1, 2]);
+	equal(values, [1, 2]);
 });
+
+test.run();

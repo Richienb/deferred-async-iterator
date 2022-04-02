@@ -37,9 +37,4 @@ export default function createDeferredAsyncIterator<NextValueType = unknown, Ret
 	Provide a `callback` that will be called when `.complete()` or `.return()` is called, or when `break` is called within a [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) loop.
 	*/
 	onCleanup(callback: () => unknown): void;
-
-	/**
-	Provide a `callback` that will be called with an error as its first argument before it is thrown. If a callback returns `false`, the error will not be thrown.
-	*/
-	onError(callback: (error: unknown) => boolean | unknown): void;
 };

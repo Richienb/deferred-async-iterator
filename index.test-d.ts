@@ -5,9 +5,6 @@ const iterator = createDeferredAsyncIterator<number>();
 
 iterator.next(1);
 iterator.onCleanup(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
-iterator.onError(error => {
-	expectType<unknown>(error);
-});
 iterator.complete();
 
 expectType<IteratorResult<number, number>>(await iterator.iterator.next());

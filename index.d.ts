@@ -5,11 +5,17 @@ Create a deferred async iterator.
 ```
 import createDeferredAsyncIterator from 'deferred-async-iterator';
 
-const {next, iterator} = createDeferredAsyncIterator();
+const iterable = {
+	[Symbol.asyncIterator]() {
+		const {next, iterator} = createDeferredAsyncIterator();
 
-callbackFunction(next);
+		callbackFunction(next);
 
-for await (const value of iterator) {
+		return iterator;
+	}
+}
+
+for await (const value of iterable) {
 	console.log(value);
 }
 ```

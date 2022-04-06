@@ -1,22 +1,8 @@
 import {test} from 'uvu';
-import {equal} from 'uvu/assert'; // eslint-disable-line node/file-extension-in-import
+import {equal, is} from 'uvu/assert'; // eslint-disable-line node/file-extension-in-import
 import pDefer from 'p-defer';
+import {promiseStateAsync as promiseState} from 'p-state';
 import createDeferredAsyncIterator from './index.js';
-
-function createDeferredCallback() {
-	const callbacks = new Set();
-
-	return {
-		nextValue(value) {
-			for (const callback of callbacks) {
-				callback(value);
-			}
-		},
-		onValue(callback) {
-			callbacks.add(callback);
-		},
-	};
-}
 
 function toAsyncIterable(iterator) {
 	return {
@@ -27,14 +13,10 @@ function toAsyncIterable(iterator) {
 }
 
 test('main', async () => {
-	const {nextValue, onValue} = createDeferredCallback();
-
 	const {next, complete, onCleanup, iterator} = createDeferredAsyncIterator();
 
-	onValue(next);
-
-	nextValue(1);
-	nextValue(2);
+	next(1);
+	next(2);
 
 	equal(await iterator.next(), {
 		done: false,
@@ -61,15 +43,11 @@ test('main', async () => {
 });
 
 test('for await...of syntax with .complete()', async () => {
-	const {nextValue, onValue} = createDeferredCallback();
-
 	const {next, complete, iterator} = createDeferredAsyncIterator();
 
-	onValue(next);
-
 	setImmediate(() => {
-		nextValue(1);
-		nextValue(2);
+		next(1);
+		next(2);
 		complete();
 	});
 
@@ -83,15 +61,11 @@ test('for await...of syntax with .complete()', async () => {
 });
 
 test('for await...of syntax with breaking', async () => {
-	const {nextValue, onValue} = createDeferredCallback();
-
 	const {next, iterator} = createDeferredAsyncIterator();
 
-	onValue(next);
-
 	setImmediate(() => {
-		nextValue(1);
-		nextValue(2);
+		next(1);
+		next(2);
 	});
 
 	const values = [];
@@ -105,6 +79,19 @@ test('for await...of syntax with breaking', async () => {
 	}
 
 	equal(values, [1, 2]);
+});
+
+test('Promise resolves when value is consumed', async () => {
+	const {next, iterator} = createDeferredAsyncIterator();
+	const promise = next(1);
+
+	is(await promiseState(promise), 'pending');
+
+	const {value} = await iterator.next();
+
+	is(value, 1);
+
+	await promise;
 });
 
 test.run();

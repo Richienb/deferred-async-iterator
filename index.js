@@ -14,25 +14,31 @@ export default function createDeferredAsyncIterator() {
 		cleanupCallbacks.clear();
 	}
 
-	function sendNextValue(value) {
+	async function enqueueValue(value) {
 		if (onNextCallbacks.size > 0) {
 			onNextCallbacks.dequeue()(value);
-		} else {
-			values.enqueue(value);
+
+			return;
 		}
+
+		const {promise, resolve} = pDefer();
+
+		values.enqueue({value, resolve});
+
+		return promise;
 	}
 
 	return {
-		next(value) {
-			sendNextValue({
+		async next(value) {
+			return enqueueValue({
 				done: false,
 				value,
 			});
 		},
-		complete() {
+		async complete() {
 			cleanup();
 
-			sendNextValue({
+			return enqueueValue({
 				done: true,
 			});
 		},
@@ -42,7 +48,11 @@ export default function createDeferredAsyncIterator() {
 		iterator: {
 			async next() {
 				if (values.size > 0) {
-					return values.dequeue();
+					const {value, resolve} = values.dequeue();
+
+					resolve();
+
+					return value;
 				}
 
 				const {promise, resolve} = pDefer();

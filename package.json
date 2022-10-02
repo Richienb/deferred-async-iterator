@@ -28,7 +28,6 @@
 		"await"
 	],
 	"dependencies": {
-		"p-defer": "^4.0.0",
 		"yocto-queue": "^1.0.0"
 	},
 	"devDependencies": {

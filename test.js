@@ -110,3 +110,28 @@ test('nextError', async t => {
 		message: 'foo',
 	});
 });
+
+test('calling .next() multiple times after .complete()', async t => {
+	const {complete, iterator} = createDeferredAsyncIterator();
+
+	const nextPromise1 = iterator.next();
+	const nextPromise2 = iterator.next();
+
+	complete();
+
+	t.deepEqual(await nextPromise1, {
+		done: true,
+	});
+
+	t.deepEqual(await nextPromise2, {
+		done: true,
+	});
+
+	t.deepEqual(await iterator.next(), {
+		done: true,
+	});
+
+	t.deepEqual(await iterator.next(), {
+		done: true,
+	});
+});

@@ -5,29 +5,36 @@ export default function createDeferredAsyncIterator() {
 	const valueQueue = new Queue();
 	const nextQueue = new Queue();
 	const {promise: onCleanup, resolve: cleanup} = pDefer();
-
-	async function enqueueValue(value) {
-		if (nextQueue.size > 0) {
-			const {resolve} = nextQueue.dequeue();
-
-			resolve(value);
-
-			return;
-		}
-
-		return new Promise(resolve => {
-			valueQueue.enqueue({value, resolve});
-		});
-	}
+	let isDone = false;
 
 	return {
 		async next(value) {
-			return enqueueValue({
+			if (isDone) {
+				return;
+			}
+
+			value = {
 				done: false,
 				value,
+			};
+
+			if (nextQueue.size > 0) {
+				const {resolve} = nextQueue.dequeue();
+
+				resolve(value);
+
+				return;
+			}
+
+			return new Promise(resolve => {
+				valueQueue.enqueue({value, resolve});
 			});
 		},
 		async nextError(error) {
+			if (isDone) {
+				return;
+			}
+
 			if (nextQueue.size > 0) {
 				const {reject} = nextQueue.dequeue();
 
@@ -41,11 +48,21 @@ export default function createDeferredAsyncIterator() {
 			});
 		},
 		async complete() {
+			if (isDone) {
+				return;
+			}
+
 			cleanup();
 
-			return enqueueValue({
-				done: true,
-			});
+			isDone = true;
+
+			while (nextQueue.size > 0) {
+				const {resolve} = nextQueue.dequeue();
+
+				resolve({
+					done: true,
+				});
+			}
 		},
 		onCleanup,
 		iterator: {
@@ -62,6 +79,12 @@ export default function createDeferredAsyncIterator() {
 					return value;
 				}
 
+				if (isDone) {
+					return {
+						done: true,
+					};
+				}
+
 				return new Promise((resolve, reject) => {
 					nextQueue.enqueue({resolve, reject});
 				});
@@ -70,7 +93,7 @@ export default function createDeferredAsyncIterator() {
 				cleanup();
 
 				return {
-					done: true,
+					done: valueQueue.size === 0,
 					value,
 				};
 			},

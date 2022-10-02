@@ -100,4 +100,13 @@ test('nextError', async t => {
 		instanceOf: Error,
 		message: 'foo',
 	});
+
+	const nextPromise = iterator.next();
+
+	nextError(new Error('foo'));
+
+	await t.throwsAsync(nextPromise, {
+		instanceOf: Error,
+		message: 'foo',
+	});
 });

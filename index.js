@@ -1,8 +1,8 @@
 import Queue from 'yocto-queue';
 
 export default function createDeferredAsyncIterator() {
-	const values = new Queue();
-	const onNextCallbacks = new Queue();
+	const valueQueue = new Queue();
+	const nextQueue = new Queue();
 	const cleanupCallbacks = new Set();
 
 	function cleanup() {
@@ -14,14 +14,16 @@ export default function createDeferredAsyncIterator() {
 	}
 
 	async function enqueueValue(value) {
-		if (onNextCallbacks.size > 0) {
-			onNextCallbacks.dequeue()(value);
+		if (nextQueue.size > 0) {
+			const {resolve} = nextQueue.dequeue();
+
+			resolve(value);
 
 			return;
 		}
 
 		return new Promise(resolve => {
-			values.enqueue({value, resolve});
+			valueQueue.enqueue({value, resolve});
 		});
 	}
 
@@ -30,6 +32,19 @@ export default function createDeferredAsyncIterator() {
 			return enqueueValue({
 				done: false,
 				value,
+			});
+		},
+		async nextError(error) {
+			if (nextQueue.size > 0) {
+				const {reject} = nextQueue.dequeue();
+
+				reject(error);
+
+				return;
+			}
+
+			return new Promise(resolve => {
+				valueQueue.enqueue({value: error, isError: true, resolve});
 			});
 		},
 		async complete() {
@@ -44,16 +59,20 @@ export default function createDeferredAsyncIterator() {
 		},
 		iterator: {
 			async next() {
-				if (values.size > 0) {
-					const {value, resolve} = values.dequeue();
+				if (valueQueue.size > 0) {
+					const {value, isError, resolve} = valueQueue.dequeue();
 
 					resolve();
+
+					if (isError) {
+						throw value;
+					}
 
 					return value;
 				}
 
-				return new Promise(resolve => {
-					onNextCallbacks.enqueue(resolve);
+				return new Promise((resolve, reject) => {
+					nextQueue.enqueue({resolve, reject});
 				});
 			},
 			async return(value) {

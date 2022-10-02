@@ -92,3 +92,14 @@ test('Promise resolves when value is consumed', async t => {
 
 	await promise;
 });
+
+test('nextError', async t => {
+	const {nextError, iterator} = createDeferredAsyncIterator();
+
+	nextError(new Error('foo'));
+
+	await t.throwsAsync(iterator.next, {
+		instanceOf: Error,
+		message: 'foo',
+	});
+});

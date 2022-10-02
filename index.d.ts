@@ -29,6 +29,11 @@ export default function createDeferredAsyncIterator<NextValueType = unknown, Ret
 	next(value?: NextValueType): Promise<void>;
 
 	/**
+	Provide an error to the iterator. Returns a promise that resolves when the error is consumed.
+	*/
+	nextError(error?: unknown): Promise<void>;
+
+	/**
 	Provide a "done" value to the iterator which causes a [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) loop to exit after all previous values have been iterated over. Any callback that was provided to `onCleanup` will be called. Returns a promise that resolves when all remaining values have been consumed.
 	*/
 	complete(): Promise<void>;

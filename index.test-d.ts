@@ -5,7 +5,7 @@ const {next, nextError, iterator, complete, onCleanup} = createDeferredAsyncIter
 
 expectType<Promise<void>>(next(1));
 expectType<Promise<void>>(nextError(new Error('Catch me if you can!')));
-onCleanup(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
+expectType<Promise<void>>(onCleanup);
 expectType<Promise<void>>(complete());
 
 expectType<IteratorResult<number, number>>(await iterator.next());

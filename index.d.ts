@@ -24,6 +24,11 @@ export default function createDeferredAsyncIterator<NextValueType = unknown, Ret
 	iterator: AsyncIterator<NextValueType, ReturnValueType, NextValueType>;
 
 	/**
+	A promise that resolves when `.complete()` or `.return()` is called, or when `break` is called within a [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) loop.
+	*/
+	onCleanup: Promise<void>;
+
+	/**
 	Provide the next value to the iterator. Returns a promise that resolves when the value is consumed.
 	*/
 	next(value?: NextValueType): Promise<void>;
@@ -38,8 +43,4 @@ export default function createDeferredAsyncIterator<NextValueType = unknown, Ret
 	*/
 	complete(): Promise<void>;
 
-	/**
-	Provide a `callback` that will be called when `.complete()` or `.return()` is called, or when `break` is called within a [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) loop.
-	*/
-	onCleanup(callback: () => unknown): void;
 };

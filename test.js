@@ -1,5 +1,4 @@
 import test from 'ava';
-import pDefer from 'p-defer';
 import {promiseStateAsync as promiseState} from 'p-state';
 import createDeferredAsyncIterator from './index.js';
 
@@ -26,19 +25,18 @@ test('main', async t => {
 		value: 2,
 	});
 
-	const {promise: cleanupPromise, resolve} = pDefer();
+	const nextPromise = iterator.next();
 
-	onCleanup(resolve);
+	t.is(await promiseState(onCleanup), 'pending');
 
-	setImmediate(() => {
-		complete();
-	});
+	const completePromise = complete();
 
-	t.deepEqual(await iterator.next(), {
+	t.deepEqual(await nextPromise, {
 		done: true,
 	});
 
-	await cleanupPromise;
+	await onCleanup;
+	t.is(await promiseState(completePromise), 'fulfilled');
 });
 
 test('for await...of syntax with .complete()', async t => {

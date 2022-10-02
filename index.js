@@ -1,17 +1,10 @@
 import Queue from 'yocto-queue';
+import pDefer from 'p-defer';
 
 export default function createDeferredAsyncIterator() {
 	const valueQueue = new Queue();
 	const nextQueue = new Queue();
-	const cleanupCallbacks = new Set();
-
-	function cleanup() {
-		for (const callback of cleanupCallbacks) {
-			callback();
-		}
-
-		cleanupCallbacks.clear();
-	}
+	const {promise: onCleanup, resolve: cleanup} = pDefer();
 
 	async function enqueueValue(value) {
 		if (nextQueue.size > 0) {
@@ -54,9 +47,7 @@ export default function createDeferredAsyncIterator() {
 				done: true,
 			});
 		},
-		onCleanup(callback) {
-			cleanupCallbacks.add(callback);
-		},
+		onCleanup,
 		iterator: {
 			async next() {
 				if (valueQueue.size > 0) {
